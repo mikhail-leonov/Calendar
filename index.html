@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Event keeper — Recurring Activity Manager</title>
+<link rel="stylesheet" href="public/fonts/common/fraunces.css">
+<link rel="stylesheet" href="public/css/app.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="head-inner">
+      <div class="brand">
+        <div class="crest">K</div>
+        <div>
+          <h1>The Event keeper</h1>
+          <div class="sub" data-i18n="app_subtitle">Recurring Activity Manager</div> 
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-accent" id="btnAdd"><span class="ico">＋</span> <span data-i18n="btn_new">New activity</span></button>
+        <button class="btn" id="btnImport"><span class="ico">⤓</span> <span data-i18n="btn_import">Import</span></button>
+        <button class="btn" id="btnExport"><span class="ico">⤒</span> <span data-i18n="btn_export">Export</span></button>
+        <button class="btn btn-ghost btn-danger" id="btnClear"><span class="ico">⌫</span> <span data-i18n="btn_clear">Clear all</span></button>
+        <select class="filter" id="langSelect" data-i18n-title="lang_label" title="Language"></select>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="timeline" data-i18n="tab_timeline">Timeline</button>
+      <button class="tab" data-tab="activities" data-i18n="tab_activities">Activities</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Toolbar (timeline only) -->
+  <div class="toolbar" id="toolbar">
+    <div class="search">
+      <span class="mag">⌕</span>
+      <input id="search" type="search" data-i18n-ph="search_ph" placeholder="Search by activity name…" autocomplete="off">
+    </div>
+    <select class="filter" id="filterCat"><option value="">All categories</option></select>
+    <label class="toggle"><input type="checkbox" id="showFinished" checked> <span data-i18n="show_finished">Finished</span></label>
+    <label class="toggle"><input type="checkbox" id="showUpcoming" checked> <span data-i18n="show_upcoming">Upcoming</span></label>
+    <button class="btn btn-sm" id="btnToday"><span class="ico">◎</span> <span id="todayLabel" data-i18n="btn_today">Today's events</span></button>
+    <button class="btn btn-sm" id="btnDir" data-i18n-title="dir_title" title="Reverse order"><span class="ico" id="dirIcon">↓</span> <span id="dirLabel" data-i18n="dir_newest">Newest first</span></button>
+  </div>
+
+  <main>
+    <div id="timelineView"></div>
+    <div id="activitiesView" style="display:none"></div>
+  </main>
+
+  <div class="foot" data-i18n="footer">
+    No server, no account, no cloud. Your data stays on this page; use Export JSON to keep a copy and Import JSON to restore it.
+  </div>
+</div>
+
+<!-- Activity form modal -->
+<div class="backdrop" id="activityModal">
+  <div class="modal">
+    <div class="modal-head"><h2 id="amTitle" data-i18n="modal_new">New activity</h2></div>
+    <div class="modal-body">
+      <input type="hidden" id="fId">
+      <div class="field">
+        <label data-i18n="f_name">Activity name</label>
+        <input id="fName" data-i18n-ph="f_name_ph" placeholder="e.g. Clean the pool" maxlength="80">
+      </div>
+      <div class="field row">
+        <div>
+          <label data-i18n="f_category">Category</label>
+          <input id="fCategory" list="catList" data-i18n-ph="f_category_ph" placeholder="e.g. Pool">
+          <datalist id="catList"></datalist>
+        </div>
+        <div>
+          <label data-i18n="f_status">Status</label>
+          <select id="fStatus">
+            <option value="active" data-i18n="status_active">Active</option>
+            <option value="paused" data-i18n="status_paused">Paused</option>
+            <option value="completed" data-i18n="status_completed">Completed</option>
+            <option value="archived" data-i18n="status_archived">Archived</option>
+          </select>
+        </div>
+      </div>
+      <div class="field row">
+        <div>
+          <label data-i18n="f_frequency">Frequency</label>
+          <select id="fFreq"></select>
+        </div>
+        <div id="customWrap" style="display:none">
+          <label data-i18n="f_customN">Every N days</label>
+          <input id="fCustom" type="number" min="1" value="30">
+        </div>
+      </div>
+      <div class="field row">
+        <div>
+          <label data-i18n="f_start">Start date</label>
+          <input id="fStart" type="date">
+        </div>
+        <div>
+          <label data-i18n="f_next">Next due</label>
+          <input id="fNext" type="date">
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="f_notes">Notes</label>
+        <textarea id="fNotes" data-i18n-ph="f_notes_ph" placeholder="Optional details…"></textarea>
+      </div>
+      <div class="hint" data-i18n="f_hint">Next due is generated from the start date &amp; frequency, but you can override it.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-accent" id="amSave" data-i18n="btn_save">Save activity</button>
+    </div>
+  </div>
+</div>
+
+<!-- Complete modal -->
+<div class="backdrop" id="completeModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><h2 data-i18n="modal_complete">Mark as done</h2></div>
+    <div class="modal-body">
+      <input type="hidden" id="cId">
+      <p id="cWhat" style="margin-top:0; color:var(--muted)"></p>
+      <div class="field">
+        <label data-i18n="c_date">Completed on</label>
+        <input id="cDate" type="date">
+      </div>
+      <div class="field">
+        <label data-i18n="c_notes">Notes (optional)</label>
+        <textarea id="cNotes" data-i18n-ph="c_notes_ph" placeholder="What was done…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close data-i18n="btn_cancel">Cancel</button>
+      <button class="btn btn-accent" id="cSave" data-i18n="btn_record">Record completion</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept="application/json,.json" style="display:none">
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="public/js/lng/en.js"></script>
+<script src="public/js/lng/ru.js"></script>
+<script src="public/js/app.js"></script>
+</body>
+</html>

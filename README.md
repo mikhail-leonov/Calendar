@@ -26,13 +26,6 @@ It runs entirely in the browser with no framework, no build step, and no backend
 
 The app is fully static and has no module or backend dependencies, so you can simply open `index.html` in a browser — including directly from disk (`file://`). To serve it over HTTP instead:
 
-```bash
-# Python 3
-python -m http.server 8000
-# or Node
-npx serve .
-```
-
 Click **New activity**, give it a name, category, frequency, and start date, and it appears on the timeline with its next-due date. As each occurrence comes up, use **✓ Done** to log it (or **Skip** to pass on it).
 
 > Your data is saved in this browser's `localStorage`. **Clear all** removes it permanently, and persistence is best-effort — some browsers block `localStorage` on `file://`, in which case the app still runs but won't remember data between reloads. Use **Export** to keep a JSON backup either way.
